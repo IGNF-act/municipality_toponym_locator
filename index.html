@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Toponymes remarquables</title>
+    <script type="text/javascript" src="https://macarte.ign.fr/carte/MapIFrameAPI.js"></script>
+	<!--<script type="text/javascript" src="https://ignf.gitlab.io/macarte/mcviewer/MapIFrameAPI.js"></script>-->
+	<style type="text/css">
+	body {
+		margin:0;
+		padding:0;
+		font-family:sans-serif;
+	}
+	.container {
+		display: flex;
+		height:100%;
+		width:100%;
+	}	
+	.sidebar {
+		width: 210px;
+		height:100vh;
+	}
+	.iframe-container {
+		position:relative;
+		width:calc(100vw - 210px);
+		height: 100vh;
+	}
+	.iframe-container iframe {
+		width: 100%;
+		height: 100%;
+		border: none;
+	}
+	.iframe-container #overlay {
+		display:none;
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.5);
+		background-image: url('loading.gif');
+		background-size: 50px 50px;
+		/*background-size: cover;  Ensures the image covers the entire element */
+		background-position: center; /* Centers the image */
+		background-repeat: no-repeat;	  /* 0.5 = opacité à 50% */
+		pointer-events: none; /* Laisse passer les clics. Enlevez-le si vous voulez bloquer l'interaction */
+	}
+	@media screen and (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100vw;
+        height: 10vh;
+    }
+	.iframe-container {
+		width:100vw;
+		height: 90vh;
+	}
+	
+
+}
+	</style>
+  </head>
+  <body>
+  <div class="container">
+	<form class="sidebar">
+		<div class="prefix"><label>Toponymes commençant par :</label>
+		<select autocomplete="off" class="prefix">
+		  <option value="" selected></option>
+		  <!--<option value="^Chateau|^Château">CHATEAU</option>
+		  <option value="^Saint">SAINT</option>
+		  <option value="^Beau">BEAU</option>
+		  <option value="^Lan">LAN</option>		  
+		  <option value="^Mont">MONT</option>
+		  <option value="^Pont">PONT</option>-->
+		  <option value="^Ker">KER</option>
+		  <option value="^Plou">PLOU</option>
+		</select>
+		</div>
+		<div class="suffix"><label">Toponymes se terminant par :</label>
+		<select autocomplete="off" class="suffix">
+		  <option value="" selected></option>
+		  <option value="ac$|ac-">AC</option>
+		  <!--<option value="acq$|acq-">ACQ</option>-->
+		  <option value="as$|as-">AN</option>
+		  <option value="as$|as-">AS</option>
+		  <option value="ax$|ax-">AX</option>
+		  <option value="ay$|ay-|aÿ$|aÿ-">AY</option>
+		  <!--<option value="on$|on-">ON</option>-->
+		  <option value="oy$|oy-">OY</option>
+		  <option value="ey$|ey-">EY</option>
+		  <option value="az$|az-">AZ</option>
+		  <option value="ch$|ch-">CH</option>
+		  <option value="cq$|cq-">CQ</option>
+		  <option value="ade$|ade-">ADE</option>
+		  <!--<option value="ès$|ès-">ÈS</option>
+		  <option value="uc$|uc-">UC</option>-->
+		  <option value="ange$|ange-">ANGE</option>
+		  <option value="court$|court-">COURT</option>
+		  <option value="ham$|ham-">HAM</option>
+		  <option value="heim$|heim-">HEIM</option>
+		  <option value="oux$|oux-">OUX</option>
+		  <!--<option value="onne$|onne-">ONNE</option>-->
+		  <option value="ville$|ville-">VILLE</option>
+		  <!--<option value="zan$|zan-">ZAN</option>-->
+		  <option value="-sur-Loire$">SUR-LOIRE</option>
+		  <option value="-sur-Garonne$">SUR-GARONNE</option>
+		  <option value="-sur-Rhone$|-sur-Rhône$">SUR-RHÔNE</option>
+		  <option value="-sur-Seine$">SUR-SEINE</option>
+		</select>
+		</div>
+	</form>
+	<div class="iframe-container">
+		<iframe id="map" src="https://macarte.ign.fr/carte/iAcnJq/Chefs-lieux-des-communes-de-France-metropolitaine" allow="geolocation clipboard-read clipboard-write" frameborder="0"></iframe>
+		<div id="overlay"></div>
+	</div>
+	<!--<input type=searchSuffix placeholder="Rechercher une chaîne de caractères dans les toponymes de communes">-->
+  </div>
+    <script>
+    // Variable globale
+    var mapAPI = null;
+	var searchPrefix = document.querySelector('select.prefix');
+	var searchSuffix = document.querySelector('select.suffix');
+	//const searchPrefix = document.getElementById("prefix");
+	//const searchSuffix = document.getElementById("suffix");
+	
+	function overlayToggleDisplay() {
+		var el = document.getElementById("overlay");
+		if (!el) return;
+		if (window.getComputedStyle(el).display === 'none') {
+			el.style.display = 'flex'; // ou 'block', ou 'flex', selon le besoin
+		} else {
+			el.style.display = 'none';
+		}
+	}
+	
+	function setFilter(param) {
+		overlayToggleDisplay();
+		//console.log('toggle');
+		//console.log(param);
+		var search;
+		if (param=='pre'){
+			search=searchPrefix.value;
+			document.querySelector('.prefix').style.color = 'black';
+			document.querySelector('.prefix').style.backgroundColor = 'rgba(255,0,0,0.23)';
+			document.querySelector('.suffix').style.color = 'grey';
+			document.querySelector('.suffix').style.backgroundColor = 'transparent';
+		}
+		if (param=='suf'){
+			search=searchSuffix.value;
+			document.querySelector('.prefix').style.color = 'grey';
+			document.querySelector('.prefix').style.backgroundColor = 'transparent';
+			document.querySelector('.suffix').style.color = 'black';
+			document.querySelector('.suffix').style.backgroundColor = 'rgba(255,0,0,0.23)';
+		}
+		console.log(search);
+		mapAPI.filterFeatures([
+		{ layerId: 5, attr: 'NOM_S', op:'regexp', val: search, matchAll: false }
+		]);
+		mapAPI.filterFeatures([
+		{ layerId: 4, attr: 'NOM_S', op:'regexp', val: search, matchAll: false }
+		],overlayToggleDisplay);
+		
+	}
+	
+    MapIFrameAPI.ready('map', function(api) {
+		mapAPI = api;
+		//api.getLayers(console.log)
+		searchPrefix.addEventListener('change', function () {setFilter('pre')});
+		searchSuffix.addEventListener('change', function () {setFilter('suf')});
+		//mapAPI.setCenter([2.33, 48.85]);
+		/*mapAPI.on('select', function(sel) {
+		console.log(sel);
+		})*/
+    })
+    </script>
+  </body>
+</html>
